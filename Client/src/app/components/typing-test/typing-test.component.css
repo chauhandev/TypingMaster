@@ -1,0 +1,19 @@
+.highlight{
+    background: lightblue;
+    border: 1px solid transparent;
+    border-radius: 13%;
+}
+.highlight-wrong{
+    background: #e1abab ;
+    border: 1px solid transparent ;
+    border-radius: 13%;
+
+}
+
+.correct{
+   color :green;
+}
+
+.incorrect{
+    color :crimson;
+} 
