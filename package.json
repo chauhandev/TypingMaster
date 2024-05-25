@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start:client": "cd client && ng build",
-    "start:server": "cd ../server && node index.js",
+    "start:server": "node index.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
