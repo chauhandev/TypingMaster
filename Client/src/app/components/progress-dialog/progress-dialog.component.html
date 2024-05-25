@@ -1,0 +1,15 @@
+<div class="dialog-container">
+    <h2 mat-dialog-title>{{ data.message }}</h2>
+    <mat-dialog-content *ngIf="!data.countdown">
+      <div class="progress-container" *ngIf="data.message === 'Waiting for Response'">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <p>Please wait while we get a response...</p>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-content *ngIf="data.countdown">
+      <div class="countdown-container">
+        <h2>{{ countdown }}</h2>
+      </div>
+    </mat-dialog-content>
+  </div>
+  

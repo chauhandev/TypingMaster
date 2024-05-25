@@ -1,0 +1,58 @@
+.notification-container {
+    border: 1px solid #ccc;
+    padding: 20px;
+    max-width: 300px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .profile {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .profile-picture {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  
+  .profile-details {
+    text-align: left;
+  }
+  
+  .name {
+    font-size: 1.2em;
+    margin: 0;
+  }
+  
+  .user-id {
+    color: #777;
+    margin: 0;
+  }
+  
+  .message {
+    margin: 15px 0;
+  }
+  
+  .actions button {
+    margin: 0 5px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .actions button:first-child {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .actions button:last-child {
+    background-color: #dc3545;
+    color: white;
+  }
+  

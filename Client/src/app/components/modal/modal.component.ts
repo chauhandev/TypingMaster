@@ -2,9 +2,16 @@ import { Component, Inject, Input } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 export interface DialogData {
-  speed: number | undefined;
-  totalWordsTyped: number | undefined;
-  correctWordsTyped: number | undefined;
+  userResult: {
+    speed: number | undefined;
+    totalWordsTyped: number | undefined;
+    correctWordsTyped: number | undefined;
+  };
+  opponentResult: {
+    speed: number | undefined;
+    totalWordsTyped: number | undefined;
+    correctWordsTyped: number | undefined;
+  };
 }
 
 @Component({
@@ -14,7 +21,8 @@ export interface DialogData {
 })
 export class ModalComponent {
   constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {
-    
+    console.log("open result dialog constructor")
+    console.log(data);
   }
 
 }

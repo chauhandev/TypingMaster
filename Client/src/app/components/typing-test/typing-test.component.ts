@@ -1,6 +1,9 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { ModalComponent } from '../modal/modal.component';
+import { WebsocketService } from 'src/app/services/websocket.service';
+import { ProgressDialogComponent } from '../progress-dialog/progress-dialog.component';
+import { ChallengeNotificationComponent } from '../challenge-notification/challenge-notification.component';
 
 @Component({
   selector: 'app-typing-test',
@@ -12,15 +15,68 @@ export class TypingTestComponent {
   testOptions:any ={ testTime :Number , }
   currentWordIndex = 0;
   typedWords : (string | undefined)[] =[]; 
-
-  textToType: string = "As a lad Jack had a jarring laugh a jagged edge to his jokes. Half the kids at school adored him half found him aloof like an old hag. Jack though had a knack for finding hidden gems a gift that had shaped his jagged path. His jalopy a faded black hulk lumbered through the hills a relic from another age. As dusk fell Jack halted gazing at the sky. A flak jacket hung loosely around him a shield against the cold. He laughed a harsh guttural sound echoing through the night haunting like a banshee's wail."
+  text =  { 
+    middleKeys : "all ask fall sad glass flask glad add dad sag lad lad lash ash has had salad sad lass alas flash flask jags jazz slag slag gas has half glad sag hags has ash glad flag all lads sad fad flask hall all jag had glass flask jags had all sad lads had slag lads sad all has glass flag glad lad had slag lass sad glass fad glass lad jags flask all",
+    upperKeys : "pot top tip pit pop out you put too pip toy yup yip tout typist quiet poetry pi piety quit yeti pew yet pie puppy poet pity up poetry put tie yeti pie pot pip pity putty pit pop out pot pip pity putty pip top tip pot out pie put pip pit pop poetry pity tip pot top pop tip pip pit pot tip put pot pit out pop you top pip pie pew out pit pip put pie tip pop pew top pit pop pot pit tip put pot putty pip pie pit pit pop out pip top pie pit pot pit pop put putty pip pie pit pit pop out pip top pie pit pot pit pop put putty pip pie pit pit pop out pip top pie pit pot pit pop put putty pip pie pit pit pop out pip top pie pit pot pit pop putty pip pie pit pit pop out pip top",
+    lowerKeys : "mix men zoom zinc move zone mob maze vim coin mice box moan oven zen ice bean bone voice mom noon moon mien coon bin moxie mezzo memo boom cozen cob bozo monoxide"
+  }
+  textToType: string = "As a lad Jack had a jarring laugh a jagged edge to his jokes. Half the kids at school adored him half found him aloof like an old hag. Jack though had a knack for finding hidden gems a gift that had shaped his jagged path. His jalopy a faded black hulk lumbered through the hills a relic from another age. As dusk fell Jack halted gazing at the sky. A flak jacket hung loosely around him a shield against the cold. He laughed a harsh guttural sound echoing through the night haunting like a banshee's wail.".toLowerCase()
 
   timer: any = "";
   testTime : number = 1 ;
   timerInterval: any = null;
+  opponent : any = null;
+  userResult!: { speed: number; totalWordsTyped: number; correctWordsTyped: number; };
 
-  constructor(private dialogRef: MatDialog) {
+  constructor(private dialog: MatDialog ,private webSocketService  :WebsocketService) {
+    this.webSocketService.listenForChallenge().subscribe((response) => {
+      this.openChallengeDialog(response);
+      this.opponent = response;
+    });
+
+    this.webSocketService.listenForChallengeResult().subscribe((response) => {
+      console.log("open result dialog")
+
+       this.openResultDialog(response.result,true);
+       //this.opponent = null;
+    });
+    this.webSocketService.listenForChallengeResponse().subscribe(response => {
+      if(response.response == true){ 
+        this.opponent = response.opponent;      
+        setTimeout(() => {
+          this.resetTest();
+          this.startTimer();
+        }, 5000);
+      }
+      else if (response.response ===false){
+        let timer = 3;
+        let countDownDialogRef = this.dialog.open(ProgressDialogComponent, {
+          width: '300px',
+          data: { message: `${this.opponent.fullName} rejected the challenge.`, countdown: false ,timer : timer }
+        });
+        setTimeout(() => {
+          countDownDialogRef.close();
+          this.resetTest();
+          this.startTimer();
+        }, timer*1000);
+       }
+      
+      
+    });
+
+    this.webSocketService.listenForOpponentCurrentlyTypingWord().subscribe((response) => {
+      console.log(response);
+      const textToTypeElement = document.getElementById('textToType');
+      if(textToTypeElement){
+        const elementWithCustomAttribute = document.querySelector(`[wordnr="${response.currentIndex}"]` );
+        if(elementWithCustomAttribute){
+          elementWithCustomAttribute.className = '';
+          elementWithCustomAttribute.classList.add('opponentPosition');
+        }
+      }
+    });
   }
+  
 
   ngOnInit() {
      let textToType  = this.textToType.split(" ");
@@ -34,10 +90,13 @@ export class TypingTestComponent {
         text.style.padding = "4px";
         text.innerHTML = textToType[i].trim();
         text.setAttribute('wordnr', `${i}`);
+        if(i== 0){
+          text.classList.add('highlight');
+        }
         textToTypeElement?.append(text);
       }
 
-      this.timer =  "00:05" //this.convertMinutesToFormat(this.testTime); 
+      this.timer =  this.convertMinutesToFormat(this.testTime); 
 
   }
   convertMinutesToFormat(minutes :number) :string {
@@ -90,6 +149,8 @@ export class TypingTestComponent {
           nextElement.classList.add('highlight');
           this.currentWordIndex++;
         }
+        if(this.opponent)
+         this.webSocketService.emitToServer("currentlyTypingWord", {socketID: this.opponent.socketID, currentIndex : this.currentWordIndex});
         (document.getElementById('userInput') as HTMLInputElement).value = '';
       }
     } else {
@@ -117,6 +178,9 @@ export class TypingTestComponent {
      if(childElements) {
       for (let i = 0; i < childElements.length; i++) {
         childElements[i].className = '';
+        if(i== 0){
+          childElements[i].classList.add('highlight');
+        }
        }
      }
      //reset time to inital state
@@ -146,16 +210,19 @@ export class TypingTestComponent {
         this.timer = newTimerVal;
         if (this.timer === '00:00') {
           //open dialog to show result
-          const dialogConfig = new MatDialogConfig();
-          dialogConfig.panelClass = 'my-dialog-class';
-          dialogConfig.width = '400px';
-          dialogConfig.data = {
-            speed: this.calculateSpeed(),
-            totalWordsTyped: this.typedWords.length,
-            correctWordsTyped: this.getCorrectWordsCount(),
-          };
-          this.dialogRef.open(ModalComponent, dialogConfig);
-
+          this.userResult = {
+              speed: this.calculateSpeed(),
+              totalWordsTyped: this.typedWords.length,
+              correctWordsTyped: this.getCorrectWordsCount(),
+            }
+            if(this.opponent == null)
+              this.openResultDialog(null ,true);
+            else
+            {
+              let data  = { opponent : this.opponent.socketID, result : this.userResult}
+              console.log("emitting resutl to server")
+              this.webSocketService.emitToServer("challengeResult",data);
+            }
           this.resetTest();
         }
       }, 1000);
@@ -202,6 +269,49 @@ export class TypingTestComponent {
     var newTimeString = formattedMinutes + ':' + formattedSeconds;
   
     return newTimeString;
+  }
+
+  openChallengeDialog(data: { name: string, userId: string, profilePictureUrl: string , socketID: string }) {
+    const dialogRef = this.dialog.open(ChallengeNotificationComponent, {
+      width: '300px',
+      data
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.accepted) {
+        this.webSocketService.emitToServer("challengeResponse", {challenger : data.socketID ,response : true} );
+        this.showCountdownDialog();
+      } else {
+        this.webSocketService.emitToServer("challengeResponse", {challenger : data.socketID ,response : false} );
+      }
+    });
+  }
+
+  private showCountdownDialog(): void {
+    let timer = 5;
+    let countDownDialogRef = this.dialog.open(ProgressDialogComponent, {
+      width: '300px',
+      data: { message: 'Match starts in', countdown: true ,timer : timer }
+    });
+    setTimeout(() => {
+      countDownDialogRef.close();
+      this.resetTest();
+      this.startTimer();
+    }, timer*1000);
+  }
+
+  openResultDialog(opponentScore: any, showResultDialog: boolean) {
+    if(showResultDialog){
+      const dialogConfig = new MatDialogConfig();
+      dialogConfig.panelClass = 'my-dialog-class';
+      dialogConfig.width = '400px';
+      dialogConfig.data = {
+        userResult : this.userResult,
+        opponentResult : opponentScore
+       };
+      this.dialog.open(ModalComponent, dialogConfig);
+    }
+    
   }
 }
 

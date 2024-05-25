@@ -1,0 +1,9 @@
+<div class="header">
+    <div class="user-info" *ngIf="isLoggedIn">
+      <img [src]="userProfilePic" alt="User Profile" (click)="toggleProfileInfo()">
+      <div class="profile-info" *ngIf="showProfileInfo">
+        <p>{{ userName }}</p>
+        <button class="buttonNeo" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </div>

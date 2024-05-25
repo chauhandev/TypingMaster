@@ -1,0 +1,17 @@
+<div class="facebook-signup-container">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="facebook-signup-form">
+      <mat-form-field appearance="fill" class="form-group">
+        <input matInput placeholder="Username" formControlName="userName">
+      </mat-form-field>
+      
+      <mat-form-field appearance="fill" class="form-group">
+        <input matInput type="password" placeholder="Password" formControlName="password">
+      </mat-form-field>
+      
+      <div class="buttonDiv">
+        <button mat-raised-button color="primary" type="submit" class="signup-button" [disabled]="loginForm.invalid">Login</button>
+        <button mat-raised-button color="primary" class="signup-button" routerLink="/signup">Sign Up</button>
+      </div>
+    </form>
+  </div>
+  

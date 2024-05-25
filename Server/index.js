@@ -1,31 +1,24 @@
 const express = require('express');
-const cors = require('cors');
-const app = express();
-const http = require('http');
-const server = http.createServer(app);
-const { Server } = require("socket.io");
-const io = new Server(server);
 const dotenv = require("dotenv");
-const authroute = require("./routes/auth.routes.js"); // Correct the path to auth.route
-dotenv.config();
+const authroute = require("./routes/auth.routes.js"); 
+const cors = require('cors');
+const { connectToMongoDB } = require('./db/connectToMongoDB.js');
+const {app ,server} = require('./socket/socket.js');
+const path = require('path');
 
-app.use(cors()); // Call cors() function
-app.use(express.json());
-
+// const app = express();
 const PORT = process.env.PORT || 3000;
-app.use('/auth', authroute); // Use app.use instead of app.get for middleware routes
+app.use(cors());
+app.use(express.json());
+dotenv.config();
+app.use(express.static(path.join(__dirname,"public")));
+app.use('/api/auth', authroute);
 
-server.listen(PORT, () => { // Use server.listen for Socket.IO
-  console.log(`listening on port ${PORT}`);
+server.listen(PORT, () => { 
+    connectToMongoDB();
+    console.log(`listening on port ${PORT}`);
 });
-// io.on('connection', (socket) => {
-    
-//     console.log('a user connected');
-//   });
-  
-// server.listen(3000, () => {
-//     console.log('listening on *:3000');
-//  });
+
 
 
 

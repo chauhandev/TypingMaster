@@ -1,0 +1,39 @@
+<div class="facebook-signup-container">
+        <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="facebook-signup-form">
+            <mat-form-field appearance="fill" class="form-group">
+              <input matInput placeholder="Full Name" formControlName="fullName">
+              <mat-error *ngIf="signupForm.get('fullName')?.invalid && signupForm.get('fullName')?.touched">
+                Full Name is required
+              </mat-error>
+            </mat-form-field>
+            
+            <mat-form-field appearance="fill" class="form-group">
+              <input matInput placeholder="Username" formControlName="userName">
+              <mat-error *ngIf="signupForm.get('userName')?.invalid && signupForm.get('userName')?.touched">
+                Username is required
+              </mat-error>
+            </mat-form-field>
+            
+            <mat-form-field appearance="fill" class="form-group">
+              <input matInput type="password" placeholder="Password" formControlName="password">
+              <mat-error *ngIf="signupForm.get('password')?.invalid && signupForm.get('password')?.touched">
+                Password is required and must be at least 6 characters long
+              </mat-error>
+            </mat-form-field>
+          
+            <mat-form-field appearance="fill" class="form-group">
+              <input matInput type="password" placeholder="Confirm Password" formControlName="confirmPassword">
+              <mat-error *ngIf="signupForm.get('confirmPassword')?.errors?.['mismatch'] && signupForm.get('confirmPassword')?.touched">
+                Passwords do not match
+              </mat-error>
+            </mat-form-field>
+          
+            <mat-radio-group formControlName="gender" class="gender-radio form-group">
+              <mat-radio-button value="male">Male</mat-radio-button>
+              <mat-radio-button value="female">Female</mat-radio-button>
+            </mat-radio-group>
+            
+            <button mat-raised-button color="primary" type="submit" [disabled]="signupForm.invalid" class="signup-button form-group">Sign Up</button>
+          </form>
+          
+  </div>

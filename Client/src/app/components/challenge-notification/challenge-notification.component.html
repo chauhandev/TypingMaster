@@ -1,0 +1,15 @@
+<div class="notification-container">
+    <div class="profile">
+      <img [src]="data.profilePic" alt="{{ data.name }}" class="profile-picture">
+      <div class="profile-details">
+        <p class="name">{{ data.fullName }}</p>
+        <p class="user-id">{{ data.userName }}</p>
+      </div>
+    </div>
+    <p class="message">challenged you. Do you want to accept?</p>
+    <div class="actions">
+      <button (click)="onAccept()">Yes</button>
+      <button (click)="onDecline()">No</button>
+    </div>
+  </div>
+  

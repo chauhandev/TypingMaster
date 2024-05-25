@@ -1,0 +1,25 @@
+.sidebar {
+   height: 100%;
+   overflow-y: auto;
+ }
+ 
+ .navbar {
+   text-align: center;
+ }
+ 
+ .list-group-item {
+   padding: 10px;
+ }
+ 
+ .user-icon {
+   width: 32px;
+   height: 32px;
+ }
+
+ .mat-tooltip {
+   background-color: #333;
+   color: #fff;
+   font-size: 14px;
+ }
+ 
+ 

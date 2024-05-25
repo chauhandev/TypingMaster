@@ -1,0 +1,38 @@
+/* Centering the form vertically and horizontally */
+.facebook-signup-container {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    height: 100vh; /* Full viewport height */
+  }
+  
+  .facebook-signup-form {
+    max-width: 350px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-group {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .mat-form-field {
+    width: 100%;
+  }
+  
+  .mat-radio-group {
+    display: flex;
+  }
+  
+  .signup-button {
+    width: 100%;
+  }
+  
+  .buttonDiv{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }

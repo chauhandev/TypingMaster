@@ -1,6 +1,14 @@
 <div class="popup">
-    <h2>Result</h2>
-    <p>Speed: {{ data.speed }} words per minute</p>
-    <p>Total Words Typed: {{ data.totalWordsTyped }}</p>
-    <p>Correct Words Typed: {{ data.correctWordsTyped }}</p>
+    <div>
+        <h3>Your Score :</h3>
+        <p>Speed: {{ data.userResult.speed }} wpm</p>
+        <p>Total Words Typed: {{ data.userResult.totalWordsTyped }}</p>
+        <p>Correct Words Typed: {{ data.userResult.correctWordsTyped }}</p>
+    </div>
+    <div *ngIf="data.opponentResult">
+        <h3>Opponent's Score :</h3>
+        <p>Speed: {{ data.opponentResult.speed }} wpm</p>
+        <p>Total Words Typed: {{ data.opponentResult.totalWordsTyped }}</p>
+        <p>Correct Words Typed: {{ data.opponentResult.correctWordsTyped }}</p>
+    </div>
 </div>
