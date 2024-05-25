@@ -14,6 +14,9 @@ dotenv.config();
 app.use(express.static(path.join(__dirname,"public")));
 app.use('/api/auth', authroute);
 
+app.get('/', function(req, res){
+    res.sendFile(`${path.join(__dirname,'public/index.html')}`);
+});
 server.listen(PORT, () => { 
     connectToMongoDB();
     console.log(`listening on port ${PORT}`);
