@@ -25,7 +25,7 @@ export class WebsocketService {
   
     // Method to establish connection
  establishConnection(): void {
-      this.socket = io('http://localhost:3000', {
+      this.socket = io({
         auth: {
           username: localStorage.getItem('username'),
           token: localStorage.getItem('token')
