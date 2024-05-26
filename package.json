@@ -3,10 +3,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start:client": "cd Client && ng build",
+    "start:client": "ng build --project client",
     "start:server": "cd Server && node index.js",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
+    "build:client": "cd Client && ng build",
+    "build": "npm run build:client",
+    "start": "npm run build && npm run start:server",
+    "watch": "cd client && ng build --watch --configuration development",
     "test": "ng test"
   },
   "private": true,
