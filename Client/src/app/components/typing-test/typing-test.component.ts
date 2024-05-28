@@ -27,24 +27,39 @@ export class TypingTestComponent {
   timerInterval: any = null;
   opponent : any = null;
   userResult!: { speed: number; totalWordsTyped: number; correctWordsTyped: number; };
+  opponentResult!: { speed: number; totalWordsTyped: number; correctWordsTyped: number; };
+  isMatchInProgress = false;
+
+  challengeConfig! :{
+    textToType: string,
+    time:number
+  }
 
   constructor(private dialog: MatDialog ,private webSocketService  :WebsocketService) {
     this.webSocketService.listenForChallenge().subscribe((response) => {
-      this.openChallengeDialog(response);
-      this.opponent = response;
+      if(!this.isMatchInProgress) {
+        this.openChallengeDialog(response);
+        this.opponent = response.Opponent;
+        this.challengeConfig = response.challengeConfig
+      }
     });
 
     this.webSocketService.listenForChallengeResult().subscribe((response) => {
-      console.log("open result dialog")
-
-       this.openResultDialog(response.result,true);
-       //this.opponent = null;
+      if(!this.isMatchInProgress) {
+        this.openResultDialog(response.result,true);
+        this.opponent = null;
+      }
+      else{
+        this.opponentResult = response.result;
+      }
+       
     });
     this.webSocketService.listenForChallengeResponse().subscribe(response => {
       if(response.response == true){ 
-        this.opponent = response.opponent;      
+        this.opponent = response.opponent;
+        this.challengeConfig = response.challengeConfig;      
         setTimeout(() => {
-          this.resetTest();
+          this.startChallenge(this.challengeConfig);
           this.startTimer();
         }, 5000);
       }
@@ -80,25 +95,10 @@ export class TypingTestComponent {
 
   ngOnInit() {
      let textToType  = this.textToType.split(" ");
-
-     const textToTypeElement = document.getElementById("textToType");
-     for (let i = 0; i < textToType.length; i++){
-        let text = document.createElement("span");
-        text.style.margin = "2px";
-        text.style.fontSize = "1.5rem";
-        text.style.fontFamily = "roboto";
-        text.style.padding = "4px";
-        text.innerHTML = textToType[i].trim();
-        text.setAttribute('wordnr', `${i}`);
-        if(i== 0){
-          text.classList.add('highlight');
-        }
-        textToTypeElement?.append(text);
-      }
-
-      this.timer =  this.convertMinutesToFormat(this.testTime); 
-
+     this.addWordsToType(textToType);     
+     this.timer =  this.convertMinutesToFormat(this.testTime); 
   }
+
   convertMinutesToFormat(minutes :number) :string {
     var formattedTime;    
     if (minutes === 1) {
@@ -171,18 +171,15 @@ export class TypingTestComponent {
   resetTest() {
      this.currentWordIndex =0;
      this.typedWords = [];
-
-     // reset css of all the span tags 
-     const textToTypeElement = document.getElementById('textToType');
-     const childElements = textToTypeElement?.children;
-     if(childElements) {
-      for (let i = 0; i < childElements.length; i++) {
-        childElements[i].className = '';
-        if(i== 0){
-          childElements[i].classList.add('highlight');
-        }
-       }
+     const textAreaElement = document.getElementById('userInput') as HTMLInputElement;
+     if (textAreaElement) {
+      textAreaElement.value = '';
+      textAreaElement.focus();
      }
+     this.clearWordToType();
+     const shuffledWordsArray = this.shuffleArray(this.textToType.split(' '));
+     this.addWordsToType(shuffledWordsArray);
+   
      //reset time to inital state
      this.timer = this.convertMinutesToFormat(this.testTime);
 
@@ -191,25 +188,48 @@ export class TypingTestComponent {
      this.timerInterval = null;  
      
   }
+
+  startChallenge(challengeConfiguration : any) {
+    this.currentWordIndex =0;
+    this.typedWords = [];
+    const textAreaElement = document.getElementById('userInput') as HTMLInputElement;
+    if (textAreaElement) {
+     textAreaElement.value = '';
+     textAreaElement.focus();
+    }
+    this.clearWordToType();
+    this.addWordsToType(challengeConfiguration.textToType.split(' '));
+  
+    //reset time to inital state
+    this.timer = this.convertMinutesToFormat(challengeConfiguration.time);
+
+    // clear time to start once user will start typing
+    clearInterval(this.timerInterval);
+    this.timerInterval = null;  
+    
+ }
   
   startTest() {
-    const textToTypeElement = document.getElementById('textToType');
-    const childElements = textToTypeElement?.children;
-    if(childElements) {
-     for (let i = 0; i < childElements.length; i++) {
-       childElements[i].className = '';
-      }
-    }
+     const textAreaElement = document.getElementById('userInput') as HTMLInputElement;
+     if (textAreaElement) {
+      textAreaElement.value = '';
+      textAreaElement.focus();
+     }
+     this.clearWordToType()
+     this.addWordsToType(this.textToType.split(' '));   
   }
 
   startTimer() {
     if (!this.timerInterval) {
+      this.isMatchInProgress = true;
       this.timerInterval = setInterval(() => {
         let timerVal: string = this.timer;
         let newTimerVal = this.decreaseTimeByOneSecond(timerVal);
         this.timer = newTimerVal;
         if (this.timer === '00:00') {
           //open dialog to show result
+          this.isMatchInProgress = false;
+
           this.userResult = {
               speed: this.calculateSpeed(),
               totalWordsTyped: this.typedWords.length,
@@ -222,6 +242,13 @@ export class TypingTestComponent {
               let data  = { opponent : this.opponent.socketID, result : this.userResult}
               console.log("emitting resutl to server")
               this.webSocketService.emitToServer("challengeResult",data);
+              this.opponent = null;
+
+              // open dialog later if any delay in match 
+              if(this.opponentResult != null){
+                this.openResultDialog(this.opponentResult,true);
+                this.opponent = null;
+              }
             }
           this.resetTest();
         }
@@ -271,7 +298,7 @@ export class TypingTestComponent {
     return newTimeString;
   }
 
-  openChallengeDialog(data: { name: string, userId: string, profilePictureUrl: string , socketID: string }) {
+  openChallengeDialog(data: any) {
     const dialogRef = this.dialog.open(ChallengeNotificationComponent, {
       width: '300px',
       data
@@ -279,10 +306,10 @@ export class TypingTestComponent {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.accepted) {
-        this.webSocketService.emitToServer("challengeResponse", {challenger : data.socketID ,response : true} );
+        this.webSocketService.emitToServer("challengeResponse", {challenger : data.opponent.socketID ,response : true , challengeConfig :this.challengeConfig} );
         this.showCountdownDialog();
       } else {
-        this.webSocketService.emitToServer("challengeResponse", {challenger : data.socketID ,response : false} );
+        this.webSocketService.emitToServer("challengeResponse", {challenger : data.opponent.socketID ,response : false} );
       }
     });
   }
@@ -295,7 +322,7 @@ export class TypingTestComponent {
     });
     setTimeout(() => {
       countDownDialogRef.close();
-      this.resetTest();
+      this.startChallenge(this.challengeConfig);
       this.startTimer();
     }, timer*1000);
   }
@@ -305,6 +332,7 @@ export class TypingTestComponent {
       const dialogConfig = new MatDialogConfig();
       dialogConfig.panelClass = 'my-dialog-class';
       dialogConfig.width = '400px';
+      dialogConfig.disableClose = true; // Prevent closing on backdrop click
       dialogConfig.data = {
         userResult : this.userResult,
         opponentResult : opponentScore
@@ -312,6 +340,41 @@ export class TypingTestComponent {
       this.dialog.open(ModalComponent, dialogConfig);
     }
     
+  }
+
+  addWordsToType(textToType: string[]) {
+    const textToTypeElement = document.getElementById("textToType");
+     for (let i = 0; i < textToType.length; i++){
+        let text = document.createElement("span");
+        text.style.margin = "2px";
+        text.style.fontSize = "1.5rem";
+        text.style.fontFamily = "roboto";
+        text.style.padding = "2px";
+        text.style.display = "inline-block";
+        text.style.wordBreak = "break-all";
+        text.innerHTML = textToType[i].trim();
+        text.setAttribute('wordnr', `${i}`);
+        if(i== 0){
+          text.classList.add('highlight');
+        }
+        textToTypeElement?.append(text);
+      }
+  }
+
+  clearWordToType() {
+    const textToTypeElement = document.getElementById("textToType");
+    if (textToTypeElement) {
+      textToTypeElement.innerHTML = '';  
+    }
+    
+  }
+
+   shuffleArray(array: any[]) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]]; 
+    }
+    return array;
   }
 }
 

@@ -52,7 +52,13 @@ console: any;
   challengeUser(user: any): void {
     this.waitingForResponse = true;
     this.challengedUserId = user.socketID;
-    this.websocketService.emitToServer("challengeUser", user.socketID);
+    let textToType =  "As a lad Jack had a jarring laugh a jagged edge to his jokes. Half the kids at school adored him half found him aloof like an old hag. Jack though had a knack for finding hidden gems a gift that had shaped his jagged path. His jalopy a faded black hulk lumbered through the hills a relic from another age. As dusk fell Jack halted gazing at the sky. A flak jacket hung loosely around him a shield against the cold. He laughed a harsh guttural sound echoing through the night haunting like a banshee's wail.".toLowerCase()
+   
+    let  challengeConfig = {
+      textToType: this.shuffleArray(textToType.split(' ')).join(' '),
+      time : 1
+    }
+    this.websocketService.emitToServer("challengeUser", {socketID :user.socketID,challengeConfig });
 
      // Open the progress dialog
      this.dialogRef = this.dialog.open(ProgressDialogComponent, {
@@ -61,7 +67,6 @@ console: any;
       data: { message: 'Waiting for Response' , countdown: false}
     });
 
-    // Wait for 10 seconds and close the dialog if no response
     setTimeout(() => {
       if (this.dialogRef) {
         this.dialogRef.close();
@@ -96,7 +101,14 @@ console: any;
 
     setTimeout(() => {
       countDownDialogRef.close();
-      // this.websocketService.startChallenge(true);
     }, timer * 1000);
+  }
+
+  shuffleArray(array: any[]) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]]; 
+    }
+    return array;
   }
 }

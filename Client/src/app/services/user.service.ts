@@ -9,7 +9,8 @@ import { BehaviorSubject, Observable } from 'rxjs';
 export class UserService {
  
 
-  private baseURl = '/api/auth/';//'http://localhost:3000/api/auth/'; // Replace with your actual backend API URL
+   private baseURl ='/api/auth' ;
+  //private baseURl ='http://localhost:3000/api/auth/'; // Replace with your actual backend API URL
   isLoggedIn = new BehaviorSubject<boolean>(this.checkIfUserIsAuthenticated());
   
   constructor(private http: HttpClient) {}

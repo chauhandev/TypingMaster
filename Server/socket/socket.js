@@ -40,7 +40,7 @@ const handleConnection = async (socket) => {
     }
     io.emit('onlineUsers', (await getUsersWithSocketIDNotNull(socket.id)));
     socket.on('disconnect', ()=> handleDisconnect(socket,userID));   
-    socket.on('challengeUser', (opponentID) => handleChallengeUser(opponentID, userID));   
+    socket.on('challengeUser', (data) => handleChallengeUser(data, userID));   
     socket.on('challengeResponse', (data) => handleChallengeResponse(data, userID)); 
     socket.on('challengeResult', (data) => handleChallengeResult(data, userID)); 
     socket.on('currentlyTypingWord', (data) => handleCurrentWord(data, userID));   
@@ -73,16 +73,16 @@ async function handleDisconnect(socket , userID){
     io.emit('onlineUsers', (await getUsersWithSocketIDNotNull(socket.id)));
   }
 
-async function handleChallengeUser(opponent, challenger) {
+async function handleChallengeUser(data, challenger) {
   try {
-    console.log("opponent challenged: " + opponent);
+    console.log("opponent challenged: " + data);
     // Fetch sender details
     const challengerData = await User.findById(challenger).select('userName profilePic fullName socketID');
     if (!challengerData) {
       throw new Error('Sender not found');
     }
     // Emit the "UserChallenge" event with sender details
-    io.to(opponent).emit('UserChallenge',  challengerData );
+    io.to(data.socketID).emit('UserChallenge',  {opponent :challengerData , challengeConfig : data.challengeConfig} );
   } catch (error) {
     console.error('Error handling challengeUser:', error);
   }
@@ -100,7 +100,7 @@ async function handleChallengeResponse(data, guest){
       throw new Error(' not found');
     }
     // Emit the "UserChallenge" event with sender details
-    io.to(data.challenger).emit('ChallengeResponse', { opponent, response: data.response });
+    io.to(data.challenger).emit('ChallengeResponse', { opponent, response: data.response ,challengeConfig: data.challengeConfig});
   } catch (error) {
     console.error('Error handling challengeUser:', error);
   }
