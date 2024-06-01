@@ -20,7 +20,7 @@ export class TypingTestComponent {
     upperKeys : "pot top tip pit pop out you put too pip toy yup yip tout typist quiet poetry pi piety quit yeti pew yet pie puppy poet pity up poetry put tie yeti pie pot pip pity putty pit pop out pot pip pity putty pip top tip pot out pie put pip pit pop poetry pity tip pot top pop tip pip pit pot tip put pot pit out pop you top pip pie pew out pit pip put pie tip pop pew top pit pop pot pit tip put pot putty pip pie pit pit pop out pip top pie pit pot pit pop put putty pip pie pit pit pop out pip top pie pit pot pit pop put putty pip pie pit pit pop out pip top pie pit pot pit pop put putty pip pie pit pit pop out pip top pie pit pot pit pop putty pip pie pit pit pop out pip top",
     lowerKeys : "mix men zoom zinc move zone mob maze vim coin mice box moan oven zen ice bean bone voice mom noon moon mien coon bin moxie mezzo memo boom cozen cob bozo monoxide"
   }
-  textToType: string = "As a lad Jack had a jarring laugh a jagged edge to his jokes. Half the kids at school adored him half found him aloof like an old hag. Jack though had a knack for finding hidden gems a gift that had shaped his jagged path. His jalopy a faded black hulk lumbered through the hills a relic from another age. As dusk fell Jack halted gazing at the sky. A flak jacket hung loosely around him a shield against the cold. He laughed a harsh guttural sound echoing through the night haunting like a banshee's wail.".toLowerCase()
+  textToType: string = "the quick brown fox jumps over a little lazy dog As a lad Jack had a jarring laugh a jagged edge to his jokes. Half the kids at school adored him half found him aloof like an old hag. Jack though had a knack for finding hidden gems a gift that had shaped his jagged path. His jalopy a faded black hulk lumbered through the hills a relic from another age. As dusk fell Jack halted gazing at the sky. A flak jacket hung loosely around him a shield against the cold. He laughed a harsh guttural sound echoing through the night haunting like a banshee's wail.".toLowerCase()
 
   timer: any = "";
   testTime : number = 1 ;
@@ -35,11 +35,13 @@ export class TypingTestComponent {
     time:number
   }
 
+  lastKeyPressed: string = '';
+
   constructor(private dialog: MatDialog ,private webSocketService  :WebsocketService) {
     this.webSocketService.listenForChallenge().subscribe((response) => {
       if(!this.isMatchInProgress) {
         this.openChallengeDialog(response);
-        this.opponent = response.Opponent;
+        this.opponent = response.opponent;
         this.challengeConfig = response.challengeConfig
       }
     });
@@ -83,6 +85,7 @@ export class TypingTestComponent {
       console.log(response);
       const textToTypeElement = document.getElementById('textToType');
       if(textToTypeElement){
+        this.removeOppoenentCSS();
         const elementWithCustomAttribute = document.querySelector(`[wordnr="${response.currentIndex}"]` );
         if(elementWithCustomAttribute){
           elementWithCustomAttribute.className = '';
@@ -111,9 +114,7 @@ export class TypingTestComponent {
 
   compare(event: any) {
     this.startTimer();
-    const userInput = (
-      document.getElementById('userInput') as HTMLInputElement
-    )?.value.trim();
+    const userInput = (document.getElementById('userInput') as HTMLInputElement)?.value.trim();
     const typedWord = userInput?.split(' ').pop();
     if (typedWord && typedWord == '') {
       return;
@@ -121,17 +122,15 @@ export class TypingTestComponent {
    
     const textToTypeElement = document.getElementById('textToType');
     const childElements = textToTypeElement?.children;
-    if (event.keyCode === 32 || event.keyCode === 13) {
-      // Space key
+    const elementWithCustomAttribute = document.querySelector(`[wordnr="${this.currentWordIndex}"]`);
+    const currentWordText = elementWithCustomAttribute? elementWithCustomAttribute.innerHTML.trim():null;
+
+    // if (event.keyCode === 32 || event.keyCode === 13) {
+      if (this.lastKeyPressed === ' ' || this.lastKeyPressed === 'Enter') { 
       this.typedWords.push(typedWord);
       if (childElements) {
-        const elementWithCustomAttribute = document.querySelector(
-          `[wordnr="${this.currentWordIndex}"]`
-        );
-
         // Check if the element exists
         if (elementWithCustomAttribute) {
-          const currentWordText = elementWithCustomAttribute.innerHTML.trim();
           if (typedWord === currentWordText) {
             elementWithCustomAttribute.className = '';
             elementWithCustomAttribute.classList.add('correct');
@@ -155,9 +154,7 @@ export class TypingTestComponent {
       }
     } else {
       if (typedWord !== undefined && childElements) {
-        if (
-          !this.textToType.split(' ')[this.currentWordIndex].includes(typedWord)
-        ) {
+        if (currentWordText != null && !currentWordText.startsWith(typedWord)) {
           childElements[this.currentWordIndex].className = '';
           childElements[this.currentWordIndex].classList.add('highlight-wrong');
         } else {
@@ -168,7 +165,11 @@ export class TypingTestComponent {
     }
 }
 
-  resetTest() {
+onKeydown(event: KeyboardEvent) {
+  this.lastKeyPressed = event.key;
+}
+
+resetTest() {
      this.currentWordIndex =0;
      this.typedWords = [];
      const textAreaElement = document.getElementById('userInput') as HTMLInputElement;
@@ -223,6 +224,7 @@ export class TypingTestComponent {
     if (!this.timerInterval) {
       this.isMatchInProgress = true;
       this.timerInterval = setInterval(() => {
+        console.log(Date.now() ,"timer")
         let timerVal: string = this.timer;
         let newTimerVal = this.decreaseTimeByOneSecond(timerVal);
         this.timer = newTimerVal;
@@ -250,9 +252,22 @@ export class TypingTestComponent {
                 this.opponent = null;
               }
             }
-          this.resetTest();
+          // this.resetTest();
+          this.removeOppoenentCSS();          
+          clearInterval(this.timerInterval);
+          this.timerInterval = null; 
+          this.timer = "00:00";
         }
       }, 1000);
+    }
+  }
+  removeOppoenentCSS() {
+    const textToTypeElement = document.getElementById('textToType');
+    const childElements = textToTypeElement?.children;
+    if(childElements){
+      for(let i = 0; i < childElements.length;i++){
+        childElements[i].classList.remove("opponentPosition");
+      }
     }
   }
   calculateSpeed() {
@@ -267,9 +282,13 @@ export class TypingTestComponent {
   }
   getCorrectWordsCount() {
     let count = 0;
-    for (let i = 0; i < this.typedWords.length; i++) {
-      if(this.typedWords[i] === this.textToType.split(' ')[i]) 
-        count++;
+    const textToTypeElement = document.getElementById('textToType');
+    const childElements = textToTypeElement?.children;
+    if(childElements){
+      for (let i = 0; i < this.typedWords.length; i++){
+        if(this.typedWords[i] === childElements[i].innerHTML.trim())
+          count++;
+      }
     }
     return count;
   }

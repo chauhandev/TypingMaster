@@ -20,7 +20,7 @@
       <div class="card">
         <div class="card-body">
           <h5 class="card-title">Type Here</h5>
-          <textarea style="resize: none;" class="form-control" rows="1" id="userInput" (keydown)="compare($event)"></textarea>
+          <textarea style="resize: none;" class="form-control" rows="1" id="userInput" (input)="compare($event)" (keydown)="onKeydown($event)"></textarea>
         </div>
       </div>
     </div>
